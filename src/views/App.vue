@@ -67,6 +67,9 @@ label {
             <b-button v-b-modal.modal-point>
               <font-awesome-icon :icon="['fa', 'map']" />
             </b-button>
+            <b-button @click="doGeolocate" v-if="isGeolocationSupported">
+                <font-awesome-icon :icon="['fa', 'crosshairs']" :spin="isDoingGeolocation"/>
+            </b-button>
           </div>
         </b-form-group>
 
@@ -165,7 +168,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import { VueTagsInput, createTags } from '@johmun/vue-tags-input';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faMap } from '@fortawesome/free-solid-svg-icons';
+import { faMap, faCrosshairs } from '@fortawesome/free-solid-svg-icons';
 
 import * as L from 'leaflet';
 
@@ -185,6 +188,7 @@ import '../../node_modules/leaflet/dist/leaflet.css';
 import '../main.css';
 
 library.add(faMap);
+library.add(faCrosshairs);
 
 Vue.config.productionTip = false;
 
@@ -249,6 +253,8 @@ export default class CompareView extends Vue {
   private responses: any[] = [];
 
   private endpoint = '/v1/search';
+
+  private isDoingGeolocation = false;
 
   pointModalShown() {
     (this.$refs.pointModal as PointModal).invalidateSize();
@@ -535,6 +541,22 @@ export default class CompareView extends Vue {
 
   get pointLng() {
     return this.point?.lng;
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  get isGeolocationSupported() {
+    return window.location.protocol === 'https:' && navigator.geolocation;
+  }
+
+  doGeolocate() {
+    this.isDoingGeolocation = true;
+    navigator.geolocation.getCurrentPosition((pos: Position) => {
+      this.isDoingGeolocation = false;
+      const crd = pos.coords;
+      this.point = new L.LatLng(crd.latitude, crd.longitude);
+      this.pointStr = `${this.point.lat},${this.point.lng}`;
+      this.onChange();
+    });
   }
 }
 </script>
