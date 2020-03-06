@@ -106,7 +106,7 @@ label {
 
         <div role="group" class="form-row form-group">
           <label class="col-sm-2 col-form-label">Endpoint</label>
-          <div class="col-sm-10" style="display:flex">
+          <div class="col-sm-10 d-flex flex-wrap">
             <b-form-radio v-model="endpoint" @change="onEndpointChange" value="/v1/search"
               >Geocode</b-form-radio
             >
