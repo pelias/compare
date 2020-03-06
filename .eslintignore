@@ -1,0 +1,5 @@
+docs/*
+dist/*
+dist-api/*
+spa/*
+
