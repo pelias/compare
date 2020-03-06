@@ -6,8 +6,9 @@ This tool has three modes, a standalone mode, standalone SPA and an api/bundled 
 
 ### Standalone mode
 
-Built by `yarn build`
-Served by default with `yarn serve`
+Build: `yarn build`
+Local dev hot-reload server: `yarn serve`
+Local dev hot-reload https server (required for geolocation):  `yarn serve-https`
 
 The standalone mode is what is hosted on https://pelias.github.io/compare/ - it defaults to geocoding against two geocode.earth api servers if other hosts aren't specified. It puts query params in location.hash of the url.
 

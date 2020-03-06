@@ -68,7 +68,7 @@ label {
               <font-awesome-icon :icon="['fa', 'map']" />
             </b-button>
             <b-button @click="doGeolocate" v-if="isGeolocationSupported">
-                <font-awesome-icon :icon="['fa', 'crosshairs']" :spin="isDoingGeolocation"/>
+              <font-awesome-icon :icon="['fa', 'crosshairs']" :spin="isDoingGeolocation" />
             </b-button>
           </div>
         </b-form-group>
@@ -151,7 +151,7 @@ label {
       />
     </b-row>
 
-    <b-modal id="modal-point" :title="pointLabel" @shown="pointModalShown">
+    <b-modal id="modal-point" :title="pointLabel" @shown="pointModalShown" ok-only ok-title="Close">
       <PointModal
         ref="pointModal"
         :lat="pointLat"
