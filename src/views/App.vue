@@ -90,7 +90,7 @@ label {
           <b-form-input
             id="input-extra-params"
             placeholder="debug=true&foo=bar&baz=bat"
-            v-model="extraParams"
+            v-model="prettyExtraParams"
             @change="onChange"
           ></b-form-input>
         </b-form-group>
@@ -133,7 +133,7 @@ label {
             id="input-search-path"
             required
             placeholder="/v1/autocomplete?text=london"
-            v-model="queryPath"
+            v-model="prettyQueryPath"
           ></b-form-input>
         </b-form-group>
 
@@ -267,6 +267,46 @@ export default class CompareView extends Vue {
     this.onChange();
   }
 
+  parseQuery(query: string) {
+    console.log('parsing: ', query);
+    const parts = query.split('?');
+    // eslint-disable-next-line prefer-destructuring
+    this.endpoint = parts[0];
+    const params = new URLSearchParams(parts[1]);
+
+    this.debug = params.get('debug') === '1';
+    params.delete('debug');
+
+    this.text = params.get('text');
+    params.delete('text');
+
+    this.ids = params.get('ids');
+    params.delete('ids');
+
+    const parsePoint = (_prefix?: string) => {
+      const prefix = _prefix ? `${_prefix}.` : '';
+
+      const lat = params.get(`${prefix}point.lat`);
+      const lon = params.get(`${prefix}point.lon`);
+      if (!lat || !lon) {
+        return null;
+      }
+
+      params.delete(`${prefix}point.lat`);
+      params.delete(`${prefix}point.lon`);
+
+      const latlng = new L.LatLng(parseFloat(lat.trim()), parseFloat(lon.trim()));
+
+      this.pointStr = `${latlng.lat},${latlng.lng}`;
+
+      return latlng;
+    };
+
+    this.point = parsePoint() || parsePoint('focus');
+
+    this.extraParams = params.toString();
+  }
+
   created() {
     // ugh, for historical reasons, we save these in local storage as "endpoints"
     const hosts = window.localStorage.getItem('endpoints');
@@ -302,49 +342,13 @@ export default class CompareView extends Vue {
       hash = decodeURIComponent(hash);
     }
     if (hash.length > 0) {
-      const parts = hash.split('?');
-      // eslint-disable-next-line prefer-destructuring
-      this.endpoint = parts[0];
-      const params = new URLSearchParams(parts[1]);
-
-      this.debug = params.get('debug') === '1';
-      params.delete('debug');
-
-      this.text = params.get('text');
-      params.delete('text');
-
-      this.ids = params.get('ids');
-      params.delete('ids');
-
-      const parsePoint = (_prefix?: string) => {
-        const prefix = _prefix ? `${_prefix}.` : '';
-
-        const lat = params.get(`${prefix}point.lat`);
-        const lon = params.get(`${prefix}point.lon`);
-        if (!lat || !lon) {
-          return null;
-        }
-
-        params.delete(`${prefix}point.lat`);
-        params.delete(`${prefix}point.lon`);
-
-        const latlng = new L.LatLng(parseFloat(lat.trim()), parseFloat(lon.trim()));
-
-        this.pointStr = `${latlng.lat},${latlng.lng}`;
-
-        return latlng;
-      };
-
-      this.point = parsePoint() || parsePoint('focus');
-
-      this.extraParams = params.toString();
-
+      this.parseQuery(hash);
+      this.onChange();
       if (
         (this.text && this.endpointUsesText)
         || (this.point && this.isPointRequired)
         || (this.ids && this.endpointUsesIds)
       ) {
-        this.onChange();
         this.onSubmit();
       }
     }
@@ -408,6 +412,25 @@ export default class CompareView extends Vue {
     }
 
     this.$forceUpdate();
+  }
+
+  get prettyExtraParams() {
+    return decodeURIComponent(this.extraParams).replace(/\+/g, ' ');
+  }
+
+  set prettyExtraParams(humanReadableExtraParams: string) {
+    this.extraParams = humanReadableExtraParams;
+  }
+
+  get prettyQueryPath() {
+    return decodeURIComponent(this.queryPath).replace(/\+/g, ' ');
+  }
+
+  set prettyQueryPath(humanReadablePath: string) {
+    console.log('perrry', humanReadablePath);
+    this.parseQuery(humanReadablePath);
+    this.onChange();
+    this.queryPath = humanReadablePath;
   }
 
   // get your own api key for free at https://geocode.earth/
