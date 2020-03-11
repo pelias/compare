@@ -37,15 +37,36 @@
   color: orange;
 }
 
+.renderjson .disclosure {
+  display: none;
+}
+
+.rounded {
+  position: relative;
+}
+
 .awesome-marker svg {
   width: 15px;
   height: 15px;
   margin-top: 11px;
 }
+
+.copyJson {
+  position: absolute;
+  right: 10px;
+  top: 15px;
+}
+
+.hiddenCopy {
+  height: 0;
+  position: absolute;
+  z-index: -1;
+  opacity: 0.001;
+}
 </style>
 
 <template>
-  <b-col :cols="12/numHosts">
+  <b-col :cols="12 / numHosts">
     <div class="messages">
       <div
         class="alert alert-danger"
@@ -68,7 +89,7 @@
         <span class="title">&nbsp;{{ host }}</span>
       </h4>
       <div class="code rounded" v-if="body.features && body.features.length">
-        <ResultsSummary :features="body.features" v-on:feature-clicked="featureClicked"/>
+        <ResultsSummary :features="body.features" v-on:feature-clicked="featureClicked" />
       </div>
       <div class="code rounded" v-else>
         No Results
@@ -88,10 +109,10 @@
     </div>
 
     <div class="assertion shadow rounded" v-if="body" style="margin-top:-10px;">
-      <!-- <div class="code"> -->
+      <div class="copyJson"><b-button @click="copyJson">Copy JSON</b-button></div>
       <div class="renderedJson" ref="renderedJson"></div>
-      <!-- </div> -->
     </div>
+    <div class="hiddenCopy"><textarea ref="hiddenCopyInput"></textarea></div>
   </b-col>
 </template>
 
@@ -119,12 +140,7 @@ import '@/vendor/leaflet.awesome-markers.css';
 import ResultsSummary from './ResultsSummary.vue';
 
 [
-  faWeebly,
-  faDotCircle,
-  faMapSigns,
-  faLanguage,
-  faMap,
-  faObjectUngroup,
+  faWeebly, faDotCircle, faMapSigns, faLanguage, faMap, faObjectUngroup,
 ].forEach((i) => library.add(i));
 
 function parseHTML(s: string) {
@@ -347,6 +363,28 @@ export default class ViewColumn extends Vue {
 
   getMap(): L.Map {
     return ((this.$refs.mymap as unknown) as { mapObject: L.Map }).mapObject;
+  }
+
+  copyJson() {
+    /* Get the text field */
+    const copyText = this.$refs.hiddenCopyInput as HTMLInputElement;
+    copyText.value = JSON.stringify(this.body, null, 4);
+
+    /* Select the text field */
+    copyText.select();
+    copyText.setSelectionRange(0, 9999999); /* For mobile devices */
+
+    /* Copy the text inside the text field */
+    document.execCommand('copy');
+
+    /* Alert the copied text */
+    this.$bvToast.toast('JSON response copied to clipboard', {
+      title: 'Status',
+      autoHideDelay: 1000,
+      appendToast: true,
+      variant: 'success',
+      toaster: 'b-toaster-bottom-center',
+    });
   }
 }
 </script>
