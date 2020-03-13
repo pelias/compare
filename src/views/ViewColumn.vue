@@ -41,7 +41,6 @@
   display: none;
 }
 
-
 .rounded {
   position: relative;
 }
@@ -52,10 +51,17 @@
   margin-top: 11px;
 }
 
-.copyJson {
+.copyButtons {
   position: absolute;
   right: 10px;
   top: 15px;
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.copyButtons button:not(:first-child) {
+  margin-top: 5px;
 }
 
 .hiddenCopy {
@@ -110,7 +116,10 @@
     </div>
 
     <div class="assertion shadow rounded" v-if="body" style="margin-top:-10px;">
-      <div class="copyJson"><b-button @click="copyJson">Copy JSON</b-button></div>
+      <div class="copyButtons">
+        <b-button class="copyJson" @click="copyJson">Copy JSON</b-button>
+        <b-button class="copyEsQuery" v-if="esQuery" @click="copyEsQuery">Copy ES Query</b-button>
+      </div>
       <div class="renderedJson" ref="renderedJson"></div>
     </div>
     <div class="hiddenCopy"><textarea ref="hiddenCopyInput"></textarea></div>
@@ -387,10 +396,11 @@ export default class ViewColumn extends Vue {
     return ((this.$refs.mymap as unknown) as { mapObject: L.Map }).mapObject;
   }
 
-  copyJson() {
+
+  copyHelper(stringToCopy: string, copyName: string) {
     /* Get the text field */
     const copyText = this.$refs.hiddenCopyInput as HTMLInputElement;
-    copyText.value = JSON.stringify(this.body, null, 4);
+    copyText.value = JSON.stringify(stringToCopy, null, 4);
 
     /* Select the text field */
     copyText.select();
@@ -400,13 +410,27 @@ export default class ViewColumn extends Vue {
     document.execCommand('copy');
 
     /* Alert the copied text */
-    this.$bvToast.toast('JSON response copied to clipboard', {
+    this.$bvToast.toast(`${copyName} copied to clipboard`, {
       title: 'Status',
       autoHideDelay: 1000,
       appendToast: true,
       variant: 'success',
       toaster: 'b-toaster-bottom-center',
     });
+  }
+
+  copyJson() {
+    this.copyHelper(this.body, 'JSON Response');
+  }
+
+  copyEsQuery() {
+    this.copyHelper(this.esQuery, 'ES Query');
+  }
+
+  get esQuery() {
+    const controllerSearchEntry = this.body?.geocoding?.debug?.find((debugEntry: Record<string, any>) => debugEntry['controller:search']) || {};
+    const esReq = controllerSearchEntry['controller:search']?.ES_req;
+    return esReq;
   }
 }
 </script>
