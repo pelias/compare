@@ -151,10 +151,12 @@ function parseHTML(s: string) {
 }
 
 function renderjsonReplacer(key: string, value: string) {
+  const makeLink = (url: string, customText?: string) => parseHTML(`<a href="${url}">"${customText || value}"</a>`);
+
   if (typeof value === 'string' && value.startsWith('whosonfirst:')) {
     const parts = value.split(':');
     const id = parts[parts.length - 1];
-    return parseHTML(`<a href="https://spelunker.whosonfirst.org/id/${id}/">"${value}"</a>`);
+    return makeLink(`https://spelunker.whosonfirst.org/id/${id}`);
   }
   // "gid": "openaddresses:address:us/tn/statewide:db4775140901eba0",
   if (typeof value === 'string' && value.startsWith('openaddresses:')) {
@@ -169,6 +171,15 @@ function renderjsonReplacer(key: string, value: string) {
         }</a>:${parts.slice(3).join(':')}"</span>`,
       );
     }
+  }
+  // gid: openstreetmap:address:node/2601893113
+  const OSM_ADDRESS_PREFX = 'openstreetmap:address:';
+  if (typeof value === 'string' && value.startsWith(OSM_ADDRESS_PREFX)) {
+    const parts = value.substr(OSM_ADDRESS_PREFX.length).split('/');
+    if (parts.length !== 2) {
+      return value;
+    }
+    return makeLink(`https://www.openstreetmap.org/${parts[0]}/${parts[1]}`);
   }
   return value;
 }
