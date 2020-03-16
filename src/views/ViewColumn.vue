@@ -174,13 +174,14 @@ function renderjsonReplacer(key: string, value: string) {
     }
   }
   // gid: openstreetmap:address:node/2601893113
-  const OSM_ADDRESS_PREFX = 'openstreetmap:address:';
-  if (typeof value === 'string' && value.startsWith(OSM_ADDRESS_PREFX)) {
-    const parts = value.substr(OSM_ADDRESS_PREFX.length).split('/');
-    if (parts.length !== 2) {
+  const OSM_PREFX = 'openstreetmap:';
+  if (typeof value === 'string' && value.startsWith(OSM_PREFX)) {
+    const gidParts = value.split(':');
+    if (gidParts.length !== 3) {
       return value;
     }
-    return makeLink(`https://www.openstreetmap.org/${parts[0]}/${parts[1]}`);
+
+    return makeLink(`https://www.openstreetmap.org/${gidParts[2]}`);
   }
 
   // "gid": "geonames:locality:4887398", --> https://www.geonames.org/4887398
