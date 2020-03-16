@@ -429,7 +429,7 @@ export default class ViewColumn extends Vue {
 
   get esQuery() {
     const controllerSearchEntry = this.body?.geocoding?.debug?.find((debugEntry: Record<string, any>) => debugEntry['controller:search']) || {};
-    const esReq = controllerSearchEntry['controller:search']?.ES_req;
+    const esReq = controllerSearchEntry['controller:search']?.ES_req?.body;
     return esReq;
   }
 }
