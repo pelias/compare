@@ -121,6 +121,7 @@
 import renderjson from '@/vendor/renderjson';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import * as L from 'leaflet';
+import * as _ from 'lodash';
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {
@@ -181,6 +182,14 @@ function renderjsonReplacer(key: string, value: string) {
     }
     return makeLink(`https://www.openstreetmap.org/${parts[0]}/${parts[1]}`);
   }
+
+  // "gid": "geonames:locality:4887398", --> https://www.geonames.org/4887398
+  if (typeof value === 'string' && value.startsWith('geonames:')) {
+    const parts = value.split(':');
+    const geonameId = parts[parts.length - 1];
+    return makeLink(`https://www.geonames.org/${geonameId}`);
+  }
+
   return value;
 }
 
