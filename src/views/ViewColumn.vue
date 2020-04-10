@@ -105,7 +105,7 @@
         ref="mymap"
         :options="{ scrollWheelZoom: false }"
       >
-        <l-tile-layer :url="url" />
+        <l-tile-layer :url="url" :attribution="attribution" />
       </l-map>
     </div>
 
@@ -241,7 +241,7 @@ export default class ViewColumn extends Vue {
 
   // url = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-  // attribution = '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors';
+  attribution = '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> | &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors';
 
   centerFeatures(features: GeoJSON.FeatureCollection) {
     const geoJsonLayer = L.geoJSON(features);
