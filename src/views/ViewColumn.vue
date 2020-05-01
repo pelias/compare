@@ -150,9 +150,8 @@ import '@/vendor/leaflet.awesome-markers.css';
 
 import ResultsSummary from './ResultsSummary.vue';
 
-[
-  faWeebly, faDotCircle, faMapSigns, faLanguage, faMap, faObjectUngroup,
-].forEach((i) => library.add(i));
+const icons = [faWeebly, faDotCircle, faMapSigns, faLanguage, faMap, faObjectUngroup];
+icons.forEach((i) => library.add(i));
 
 function parseHTML(s: string) {
   const tmp = document.implementation.createHTMLDocument();
@@ -250,7 +249,8 @@ export default class ViewColumn extends Vue {
 
   // url = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-  attribution = '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> | &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors';
+  attribution =
+    '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> | &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors';
 
   centerFeatures(features: GeoJSON.FeatureCollection) {
     const geoJsonLayer = L.geoJSON(features);
@@ -396,7 +396,6 @@ export default class ViewColumn extends Vue {
     return ((this.$refs.mymap as unknown) as { mapObject: L.Map }).mapObject;
   }
 
-
   copyHelper(stringToCopy: string, copyName: string) {
     /* Get the text field */
     const copyText = this.$refs.hiddenCopyInput as HTMLInputElement;
@@ -428,9 +427,13 @@ export default class ViewColumn extends Vue {
   }
 
   get esQuery() {
-    const controllerSearchEntry = this.body?.geocoding?.debug?.find((debugEntry: Record<string, any>) => debugEntry['controller:search']) || {};
-    const esReq = controllerSearchEntry['controller:search']?.ES_req?.body;
-    return esReq;
+    const esReqEntries = this.body?.geocoding?.debug
+      ?.map((debugEntry: Record<string, any>) => (debugEntry['controller:search'] || {}).ES_req?.body)
+      .filter((e: any) => Boolean(e));
+    if (esReqEntries) {
+      return esReqEntries[0];
+    }
+    return '';
   }
 }
 </script>
