@@ -245,12 +245,9 @@ export default class ViewColumn extends Vue {
 
   center = latLng(47.41322, -1.219482);
 
-  url = '//{s}.tiles.mapbox.com/v3/randyme.i0568680/{z}/{x}/{y}.png';
+  url = '//{s}.tile.jawg.io/jawg-terrain/{z}/{x}/{y}.png?access-token=t6fAKnvaPdPCucraY88YwlKjBfUHqBMvvZBIWlcp1Z9Z5FVtA02uWo6Dc9DGB2JO';
 
-  // url = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-
-  attribution =
-    '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> | &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors';
+  attribution = 'Map &copy; <a href="http://jawg.io" target="_blank" class="jawg-attrib"><b>Jawg</b>Maps</a> | Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" class="osm-attrib">OpenStreetMap contributors</a>';
 
   centerFeatures(features: GeoJSON.FeatureCollection) {
     const geoJsonLayer = L.geoJSON(features);
