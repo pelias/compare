@@ -58,7 +58,7 @@ label {
           <div style="display: flex">
             <b-form-input
               id="input-point"
-              placeholder="40.74, -74"
+              placeholder="latitude, longitude"
               v-model="pointStr"
               @change="onPointChange"
               :required="isPointRequired"
@@ -396,7 +396,7 @@ export default class CompareView extends Vue {
 
   onPointChange(v: string) {
     const parts = v.split(',');
-    this.point = new L.LatLng(parseFloat(parts[0].trim()), parseFloat(parts[1].trim()));
+    this.point = new L.LatLng(parseFloat(parts[1].trim()), parseFloat(parts[0].trim()));
     this.onChange();
   }
 
@@ -524,7 +524,9 @@ export default class CompareView extends Vue {
   }
 
   pointChanged(latlng: L.LatLng) {
-    this.pointStr = `${latlng.lat},${latlng.lng}`;
+    this.pointStr = `${latlng.lng},${latlng.lat}`;
+    this.onPointChange(this.pointStr);
+    this.onChange();
   }
 
   get endpointUsesText() {
@@ -575,7 +577,7 @@ export default class CompareView extends Vue {
       this.isDoingGeolocation = false;
       const crd = pos.coords;
       this.point = new L.LatLng(crd.latitude, crd.longitude);
-      this.pointStr = `${this.point.lat},${this.point.lng}`;
+      this.pointStr = `${this.point.lng},${this.point.lat}`;
       this.onChange();
     });
   }
