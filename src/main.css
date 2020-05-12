@@ -456,3 +456,11 @@ h4 {
 .icon svg {
   vertical-align: 0;
 }
+
+.renderedJson span {
+  scroll-margin-top: 250px;
+}
+
+span.highlightedFeature {
+  font-weight: 600;
+}

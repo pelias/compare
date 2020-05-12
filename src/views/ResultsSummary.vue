@@ -1,7 +1,7 @@
 <template>
   <ul class="summary">
     <li
-      @click="featureClicked(feature)"
+      @click="featureClicked(feature, index)"
       v-for="(feature, index) in (features || [])"
       :key="feature.properties.id"
     >
@@ -62,8 +62,8 @@ export default class ResultsSummary extends Vue {
     ].forEach((i) => library.add(i));
   }
 
-  featureClicked(feature: GeoJSON.Feature) {
-    this.$emit('feature-clicked', feature);
+  featureClicked(feature: GeoJSON.Feature, index: number) {
+    this.$emit('feature-clicked', { feature, index });
   }
 
   // eslint-disable-next-line class-methods-use-this

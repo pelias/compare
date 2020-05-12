@@ -103,9 +103,16 @@
       </div>
     </div>
 
-    <div class="assertion shadow rounded" style="margin-top:-10px;">
+    <div class="assertion shadow rounded" style="
+      margin-top:-10px;
+      position: sticky;
+      top: 0px;
+      z-index: 100;
+    ">
       <l-map
-        style="height: 200px;"
+        style="
+          height: 200px;
+        "
         :center="center"
         :zoom="13"
         ref="mymap"
@@ -115,7 +122,9 @@
       </l-map>
     </div>
 
-    <div class="assertion shadow rounded" v-if="body" style="margin-top:-10px;">
+    <div class="assertion shadow rounded" v-if="body" style="
+      margin-top:5px;
+    ">
       <div class="copyButtons">
         <b-button class="copyJson" @click="copyJson">Copy JSON</b-button>
         <b-button class="copyEsQuery" v-if="esQuery" @click="copyEsQuery">Copy ES Query</b-button>
@@ -131,6 +140,7 @@ import renderjson from '@/vendor/renderjson';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import * as L from 'leaflet';
 import * as _ from 'lodash';
+import * as $ from 'jquery';
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {
@@ -277,7 +287,7 @@ export default class ViewColumn extends Vue {
     renderjson.set_replacer(renderjsonReplacer);
     renderjson.set_show_to_level('all');
 
-    (this.$refs.renderedJson as any).appendChild(renderjson(this.body));
+    (this.$refs.renderedJson as any).appendChild(renderjson(this.body, 'response'));
     this.getMap().invalidateSize();
     this.centerFeatures(this.body.features);
 
@@ -337,7 +347,13 @@ export default class ViewColumn extends Vue {
         title: `${f.properties?.gid} - ${f.properties?.label}`,
         icon: i,
       }).bindPopup(
-        `<p><strong style="font-size:14px">${f.properties?.label}</strong><br />${f.properties?.gid}</p>`,
+        `<p>
+          <strong style="font-size:14px">
+            ${f.properties?.label}
+          </strong>
+          <br />
+          ${f.properties?.gid}
+        </p>`,
       );
     };
 
@@ -416,7 +432,7 @@ export default class ViewColumn extends Vue {
     }
   }
 
-  featureClicked(feature: GeoJSON.Feature) {
+  featureClicked({ feature, index }: {feature: GeoJSON.Feature; index: number}) {
     const geojson = L.geoJSON(feature);
     const bounds = geojson.getBounds();
 
@@ -424,6 +440,12 @@ export default class ViewColumn extends Vue {
       this.getMap().setView(bounds.getCenter(), this.getZoomLevelForLayer(feature.properties?.layer || ''));
     } else {
       this.getMap().fitBounds(bounds);
+    }
+
+    const elem = document.getElementById(`response.features.${index}`);
+    if (elem) {
+      elem!.scrollIntoView();
+      elem.classList.add('highlightedFeature');
     }
   }
 
