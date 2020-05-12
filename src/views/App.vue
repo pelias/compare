@@ -121,7 +121,7 @@ label {
           <label class="col-sm-2 col-form-label">Endpoint</label>
           <div class="col-sm-10 d-flex flex-wrap">
             <b-form-radio v-model="endpoint" @change="onEndpointChange" value="/v1/search"
-              >Geocode</b-form-radio
+              >Search</b-form-radio
             >
             <b-form-radio v-model="endpoint" @change="onEndpointChange" value="/v1/autocomplete"
               >Autocomplete</b-form-radio
