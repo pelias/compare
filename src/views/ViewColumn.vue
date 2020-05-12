@@ -287,7 +287,7 @@ export default class ViewColumn extends Vue {
     renderjson.set_replacer(renderjsonReplacer);
     renderjson.set_show_to_level('all');
 
-    (this.$refs.renderedJson as any).appendChild(renderjson(this.body, 'response'));
+    (this.$refs.renderedJson as any).appendChild(renderjson(this.body, `response-${this.host}`));
     this.getMap().invalidateSize();
     this.centerFeatures(this.body.features);
 
@@ -442,9 +442,16 @@ export default class ViewColumn extends Vue {
       this.getMap().fitBounds(bounds);
     }
 
-    const elem = document.getElementById(`response.features.${index}`);
+    const previouslyHighlightedElemented = document.getElementsByClassName('highlightedFeature');
+    // eslint-disable-next-line no-restricted-syntax
+    for (const highlightedFeature of previouslyHighlightedElemented) {
+      highlightedFeature.classList.remove('highlightedFeature');
+    }
+
+
+    const elem = document.getElementById(`response-${this.host}.features.${index}`);
     if (elem) {
-      elem!.scrollIntoView();
+      elem.scrollIntoView();
       elem.classList.add('highlightedFeature');
     }
   }
