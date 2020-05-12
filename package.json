@@ -64,6 +64,7 @@
   "dependencies": {
     "@types/geojson": "^7946.0.7",
     "@types/lodash": "^4.14.150",
-    "lodash": "^4.17.15"
+    "lodash": "^4.17.15",
+    "vue-backtotop": "^1.6.1"
   }
 }

@@ -160,6 +160,8 @@ label {
         v-on:point-changed="pointChanged"
       />
     </b-modal>
+
+    <back-to-top text="Back to top"></back-to-top>
   </b-container>
 </template>
 
@@ -170,6 +172,8 @@ import { VueTagsInput, createTags } from '@johmun/vue-tags-input';
 
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faMap, faCrosshairs } from '@fortawesome/free-solid-svg-icons';
+
+import BackToTop from 'vue-backtotop';
 
 import * as L from 'leaflet';
 
@@ -187,6 +191,8 @@ import PointModal from './PointModal.vue';
 import '../../node_modules/leaflet/dist/leaflet.css';
 
 import '../main.css';
+
+Vue.use(BackToTop);
 
 library.add(faMap);
 library.add(faCrosshairs);

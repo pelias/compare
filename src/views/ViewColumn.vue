@@ -91,10 +91,20 @@
       </div>
     </div>
 
+    <h4
+      class="code-title code-title-silver"
+      style="
+      position: sticky;
+      top: 0px;
+      z-index: 100;
+      padding-left: 10px;
+    "
+    >
+      <span class="title"
+        >&nbsp;<a :href="url">{{ host }}</a></span
+      >
+    </h4>
     <div class="response shadow">
-      <h4 class="code-title code-title-silver rounded">
-        <span class="title">&nbsp;<a :href="url">{{ host }}</a></span>
-      </h4>
       <div class="code rounded" v-if="body.features && body.features.length">
         <ResultsSummary :features="body.features" v-on:feature-clicked="featureClicked" />
       </div>
@@ -103,12 +113,15 @@
       </div>
     </div>
 
-    <div class="assertion shadow rounded" style="
+    <div
+      class="assertion shadow rounded"
+      style="
       margin-top:-10px;
       position: sticky;
-      top: 0px;
+      top: 30px;
       z-index: 100;
-    ">
+    "
+    >
       <l-map
         style="
           height: 200px;
@@ -122,9 +135,13 @@
       </l-map>
     </div>
 
-    <div class="assertion shadow rounded" v-if="body" style="
+    <div
+      class="assertion shadow rounded"
+      v-if="body"
+      style="
       margin-top:5px;
-    ">
+    "
+    >
       <div class="copyButtons">
         <b-button class="copyJson" @click="copyJson">Copy JSON</b-button>
         <b-button class="copyEsQuery" v-if="esQuery" @click="copyEsQuery">Copy ES Query</b-button>
@@ -255,9 +272,11 @@ export default class ViewColumn extends Vue {
 
   center = latLng(47.41322, -1.219482);
 
-  tileUrl = '//{s}.tile.jawg.io/jawg-terrain/{z}/{x}/{y}.png?access-token=t6fAKnvaPdPCucraY88YwlKjBfUHqBMvvZBIWlcp1Z9Z5FVtA02uWo6Dc9DGB2JO';
+  tileUrl =
+    '//{s}.tile.jawg.io/jawg-terrain/{z}/{x}/{y}.png?access-token=t6fAKnvaPdPCucraY88YwlKjBfUHqBMvvZBIWlcp1Z9Z5FVtA02uWo6Dc9DGB2JO';
 
-  attribution = 'Map &copy; <a href="http://jawg.io" target="_blank" class="jawg-attrib"><b>Jawg</b>Maps</a> | Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" class="osm-attrib">OpenStreetMap contributors</a>';
+  attribution =
+    'Map &copy; <a href="http://jawg.io" target="_blank" class="jawg-attrib"><b>Jawg</b>Maps</a> | Map data &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" class="osm-attrib">OpenStreetMap contributors</a>';
 
   centerFeatures(features: GeoJSON.FeatureCollection) {
     const geoJsonLayer = L.geoJSON(features);
@@ -280,7 +299,6 @@ export default class ViewColumn extends Vue {
     if (window.location.protocol === 'file:' && !this.tileUrl.includes('http:')) {
       this.tileUrl = `http:${this.tileUrl}`;
     }
-
 
     renderjson.set_replacer(renderjsonReplacer);
     renderjson.set_show_to_level('all');
@@ -430,12 +448,15 @@ export default class ViewColumn extends Vue {
     }
   }
 
-  featureClicked({ feature, index }: {feature: GeoJSON.Feature; index: number}) {
+  featureClicked({ feature, index }: { feature: GeoJSON.Feature; index: number }) {
     const geojson = L.geoJSON(feature);
     const bounds = geojson.getBounds();
 
     if (feature.geometry.type === 'Point') {
-      this.getMap().setView(bounds.getCenter(), this.getZoomLevelForLayer(feature.properties?.layer || ''));
+      this.getMap().setView(
+        bounds.getCenter(),
+        this.getZoomLevelForLayer(feature.properties?.layer || ''),
+      );
     } else {
       this.getMap().fitBounds(bounds);
     }
@@ -445,7 +466,6 @@ export default class ViewColumn extends Vue {
     for (const highlightedFeature of previouslyHighlightedElemented) {
       highlightedFeature.classList.remove('highlightedFeature');
     }
-
 
     const elem = document.getElementById(`response-${this.host}.features.${index}`);
     if (elem) {
@@ -490,7 +510,9 @@ export default class ViewColumn extends Vue {
 
   get esQuery() {
     const esReqEntries = this.body?.geocoding?.debug
-      ?.map((debugEntry: Record<string, any>) => (debugEntry['controller:search'] || {}).ES_req?.body)
+      ?.map(
+        (debugEntry: Record<string, any>) => (debugEntry['controller:search'] || {}).ES_req?.body
+      )
       .filter((e: any) => Boolean(e));
     if (esReqEntries) {
       return esReqEntries[0];
