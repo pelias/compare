@@ -139,8 +139,6 @@
 import renderjson from '@/vendor/renderjson';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import * as L from 'leaflet';
-import * as _ from 'lodash';
-import * as $ from 'jquery';
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
 import {

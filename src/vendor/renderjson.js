@@ -106,7 +106,6 @@ var A = function A(txt, classname, callback) {
   a.appendChild(text(txt));
   a.href = "#";
   a.onclick = function(e) {
-    console.log(e);
     if (e) e.stopPropagation();
     if (e) e.preventDefault();
     callback();
@@ -120,7 +119,6 @@ function _renderjson(json, indent, dont_indent, show_level, options, path) {
   const wrapper = span("")
   wrapper.id = path;
   if (Array.isArray(el)) {
-    console.log(el);
     el.forEach((e) => wrapper.appendChild(e));
   } else {
     wrapper.appendChild(el);
