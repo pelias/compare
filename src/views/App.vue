@@ -11,6 +11,10 @@ label {
 .tag-editor {
   flex-grow: 1;
 }
+
+.pointButtons label {
+  width: unset !important;
+}
 </style>
 <template>
   <b-container fluid>
@@ -58,18 +62,27 @@ label {
           <div style="display: flex">
             <b-form-input
               id="input-point"
-              placeholder="longitude, latitude"
+              :placeholder="pointPlaceholderText"
               v-model="pointStr"
-              @change="onPointChange"
+              @change="onPointStringInputChange"
               :required="isPointRequired"
             ></b-form-input>
 
-            <b-button v-b-modal.modal-point>
+            <b-button v-b-modal.modal-point class="ml-3">
               <font-awesome-icon :icon="['fa', 'map']" />
             </b-button>
-            <b-button @click="doGeolocate" v-if="isGeolocationSupported">
+            <b-button @click="doGeolocate" v-if="isGeolocationSupported" class="ml-3">
               <font-awesome-icon :icon="['fa', 'crosshairs']" :spin="isDoingGeolocation" />
             </b-button>
+
+            <b-form-radio-group
+              v-model="selectedPointOption"
+              :options="pointOptions"
+              class="ml-3 pointButtons"
+              buttons
+              button-variant="outline-secondary"
+              @change="pointOptionsChanged"
+            ></b-form-radio-group>
           </div>
         </b-form-group>
 
@@ -223,6 +236,9 @@ type Tag = {
   text: string;
 };
 
+const LNG_LAT_OPTION = 'lng/lat';
+const LAT_LNG_OPTION = 'lat/lng';
+
 @Component({
   components: {
     PointModal,
@@ -263,6 +279,12 @@ export default class CompareView extends Vue {
 
   private isDoingGeolocation = false;
 
+  pointOptions = [LNG_LAT_OPTION, LAT_LNG_OPTION];
+
+  pointPlaceholderText = 'Longitude, Latitude';
+
+  selectedPointOption = LNG_LAT_OPTION;
+
   pointModalShown() {
     (this.$refs.pointModal as PointModal).invalidateSize();
   }
@@ -272,6 +294,22 @@ export default class CompareView extends Vue {
     // ugh, for historical reasons, we save these in local storage as "endpoints"
     window.localStorage.setItem('endpoints', this.hosts.map((h) => h.text).join(','));
     this.onChange();
+  }
+
+  pointOptionsChanged(newOption: string) {
+    if (newOption === LNG_LAT_OPTION) {
+      this.pointPlaceholderText = 'Longitude, Latitude';
+    } else {
+      this.pointPlaceholderText = 'Latitude, Longitude';
+    }
+    this.selectedPointOption = newOption;
+
+    console.log('pointOptionsChanged', newOption);
+
+    if (this.pointStr) {
+      console.log(this.pointStr);
+      this.onPointStringInputChange(this.pointStr);
+    }
   }
 
   parseQuery(query: string) {
@@ -304,6 +342,7 @@ export default class CompareView extends Vue {
       const latlng = new L.LatLng(parseFloat(lat.trim()), parseFloat(lon.trim()));
 
       this.pointStr = `${latlng.lng},${latlng.lat}`;
+      this.selectedPointOption = 'lng/lat';
 
       return latlng;
     };
@@ -363,9 +402,13 @@ export default class CompareView extends Vue {
 
     this.parseHash();
 
-    window.addEventListener('hashchange', () => {
-      this.parseHash();
-    }, false);
+    window.addEventListener(
+      'hashchange',
+      () => {
+        this.parseHash();
+      },
+      false,
+    );
   }
 
   getParams() {
@@ -409,9 +452,51 @@ export default class CompareView extends Vue {
     this.onChange();
   }
 
-  onPointChange(v: string) {
-    const parts = v.split(',');
-    this.point = new L.LatLng(parseFloat(parts[1].trim()), parseFloat(parts[0].trim()));
+
+  onPointStringInputChange(v: string) {
+    const parseToParts = () => {
+      if (v.includes('{') || v.includes('[')) {
+        const match = v.match(/([+-]?\d+\.\d+)[^\d]+([+-]?\d+\.\d+)/);
+        if (!match) {
+          // eslint-disable-next-line no-alert
+          window.alert(`Could not parse coordinates from ${v}`);
+          throw new Error('Could not parse coordinates');
+        }
+        // assume this is coming from geojson so it's lng/lat
+        this.selectedPointOption = LNG_LAT_OPTION;
+        return [Number.parseFloat(match[1]), Number.parseFloat(match[2])];
+      }
+      const parts = v.split(',');
+
+      const part1 = parseFloat(parts[0].trim());
+      const part2 = parseFloat(parts[1].trim());
+      return [part1, part2];
+    };
+
+    const [part1, part2] = parseToParts();
+
+    if (this.selectedPointOption === LNG_LAT_OPTION) {
+      console.log('parsing as lnglat');
+      this.point = new L.LatLng(part2, part1);
+    } else {
+      console.log('parsing as latlng');
+      this.point = new L.LatLng(part1, part2);
+    }
+
+    console.log(this.point);
+
+    this.onChange();
+  }
+
+  pointChanged() {
+    if (!this.point) {
+      return;
+    }
+    if (this.selectedPointOption === LNG_LAT_OPTION) {
+      this.pointStr = `${this.point.lng},${this.point.lat}`;
+    } else {
+      this.pointStr = `${this.point.lat},${this.point.lng}`;
+    }
     this.onChange();
   }
 
@@ -540,12 +625,6 @@ export default class CompareView extends Vue {
       });
   }
 
-  pointChanged(latlng: L.LatLng) {
-    this.pointStr = `${latlng.lng},${latlng.lat}`;
-    this.onPointChange(this.pointStr);
-    this.onChange();
-  }
-
   get endpointUsesText() {
     return ['/v1/search', '/v1/autocomplete'].includes(this.endpoint);
   }
@@ -590,15 +669,17 @@ export default class CompareView extends Vue {
 
   doGeolocate() {
     this.isDoingGeolocation = true;
-    navigator.geolocation.getCurrentPosition((pos: Position) => {
-      this.isDoingGeolocation = false;
-      const crd = pos.coords;
-      this.point = new L.LatLng(crd.latitude, crd.longitude);
-      this.pointStr = `${this.point.lng},${this.point.lat}`;
-      this.onChange();
-    }, (error: any) => {
-      this.isDoingGeolocation = false;
-    });
+    navigator.geolocation.getCurrentPosition(
+      (pos: Position) => {
+        this.isDoingGeolocation = false;
+        const crd = pos.coords;
+        this.point = new L.LatLng(crd.latitude, crd.longitude);
+        this.pointChanged();
+      },
+      (error: any) => {
+        this.isDoingGeolocation = false;
+      },
+    );
   }
 }
 </script>
