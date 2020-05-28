@@ -8,10 +8,7 @@
 .renderjson a {
   text-decoration: none;
 }
-.renderjson .disclosure {
-  color: crimson;
-  font-size: 150%;
-}
+
 .renderjson .syntax {
   color: grey;
 }
@@ -35,10 +32,6 @@
 }
 .renderjson .array.syntax {
   color: orange;
-}
-
-.renderjson .disclosure {
-  display: none;
 }
 
 .rounded {

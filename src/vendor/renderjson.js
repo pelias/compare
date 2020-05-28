@@ -1,3 +1,14 @@
+/*
+NOTE(blackmad): this is a slightly hacked copy of https://github.com/caldwell/renderjson
+
+Among other things,
+- it uses a two space indent
+- it linkifies the opening bracket of objects & arrays to collapse them,
+  rather than using the icons ⊕ and ⊖
+- it adds the ability to have a replacer function that can change how strings
+  are rendered, this is used to linkify GIDs in ViewColumn.vue
+*/
+
 /* eslint-disable */
 // Copyright © 2013-2017 David Caldwell <david@porkrind.org>
 //
@@ -139,7 +150,7 @@ function _renderjsonhelper(json, indent, dont_indent, show_level, options, path)
           empty.parentNode,
           (content = prepend(
             builder(),
-            A(options.hide, "disclosure", function() {
+            A(open, type + " syntax", function() {
               content.style.display = "none";
               empty.style.display = "inline";
             })
@@ -150,8 +161,7 @@ function _renderjsonhelper(json, indent, dont_indent, show_level, options, path)
     };
     append(
       empty,
-      A(options.show, "disclosure", show),
-      themetext(type + " syntax", open),
+      A(open, type + " syntax", show),
       A(placeholder, null, show),
       themetext(type + " syntax", close)
     );
@@ -183,7 +193,7 @@ function _renderjsonhelper(json, indent, dont_indent, show_level, options, path)
     if (json.length == 0) return themetext(null, my_indent, "array syntax", "[]");
 
     return disclosure("[", options.collapse_msg(json.length), "]", "array", function() {
-      var as = append(span("array"), themetext("array syntax", "[", null, "\n"));
+      var as = append(span("array"), themetext("array syntax", "", null, "\n"));
       for (var i = 0; i < json.length; i++)
         append(
           as,
@@ -212,7 +222,7 @@ function _renderjsonhelper(json, indent, dont_indent, show_level, options, path)
     return themetext(null, my_indent, "object syntax", "{}");
 
   return disclosure("{", options.collapse_msg(Object.keys(json).length), "}", "object", function() {
-    var os = append(span("object"), themetext("object syntax", "{", null, "\n"));
+    var os = append(span("object"), themetext("object syntax", "", null, "\n"));
     for (var k in json) var last = k;
     var keys = options.property_list || Object.keys(json);
     if (options.sort_objects) keys = keys.sort();
