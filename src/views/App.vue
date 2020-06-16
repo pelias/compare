@@ -142,15 +142,17 @@ label {
         </div>
 
         <b-form-group label="Search path" label-for="input-search-path" label-cols-sm="2">
-          <b-form-input
-            id="input-search-path"
-            required
-            placeholder="/v1/autocomplete?text=london"
-            v-model="prettyQueryPath"
-          ></b-form-input>
+          <div style="display: flex">
+            <b-form-input
+              id="input-search-path"
+              required
+              placeholder="/v1/autocomplete?text=london"
+              v-model="prettyQueryPath"
+            ></b-form-input>
+            <b-button type="submit" variant="primary">Submit</b-button>
+          </div>
         </b-form-group>
 
-        <b-button type="submit" variant="primary">Submit</b-button>
       </b-form>
     </b-row>
 
