@@ -63,6 +63,7 @@
   z-index: -1;
   opacity: 0.001;
 }
+
 </style>
 
 <template>
@@ -116,9 +117,7 @@
     "
     >
       <l-map
-        style="
-          height: 200px;
-        "
+        style="height:200px;"
         :center="center"
         :zoom="13"
         ref="mymap"
@@ -158,6 +157,7 @@ import {
   faMapSigns,
   faLanguage,
   faCrosshairs,
+  faExpand,
 } from '@fortawesome/free-solid-svg-icons';
 import { faWeebly } from '@fortawesome/free-brands-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -170,9 +170,21 @@ import '@/vendor/leaflet.awesome-markers.css';
 import 'leaflet-contextmenu/dist/leaflet.contextmenu';
 import 'leaflet-contextmenu/dist/leaflet.contextmenu.css';
 
+import 'leaflet-easybutton/src/easy-button';
+import 'leaflet-easybutton/src/easy-button.css';
+
 import ResultsSummary from './ResultsSummary.vue';
 
-const icons = [faWeebly, faDotCircle, faMapSigns, faLanguage, faMap, faObjectUngroup, faCrosshairs];
+const icons = [
+  faWeebly,
+  faDotCircle,
+  faMapSigns,
+  faLanguage,
+  faMap,
+  faObjectUngroup,
+  faCrosshairs,
+  faExpand,
+];
 icons.forEach((i) => library.add(i));
 
 function parseHTML(s: string) {
@@ -184,7 +196,7 @@ function parseHTML(s: string) {
 function renderjsonReplacer(key: string, value: string) {
   const makeLink = (url: string, customText?: string) => {
     const a = parseHTML(`<a>"${customText || value}"</a>`);
-    (a as any).href = url;
+    (a as HTMLAnchorElement).href = url;
     return a;
   };
 
@@ -280,13 +292,16 @@ export default class ViewColumn extends Vue {
   private summary = '';
 
   mapOptions = {
+    scrollWheelZoom: false,
     contextmenu: true,
     contextmenuWidth: 140,
     contextmenuItems: [
       {
         text: 'Search OSM',
         callback: ({ latlng }: { latlng: L.LatLng }) => {
-          window.open(`https://www.openstreetmap.org/query?lat=${latlng.lat}&lon=${latlng.lng}#map=15/${latlng.lat}/${latlng.lng}`);
+          window.open(
+            `https://www.openstreetmap.org/query?lat=${latlng.lat}&lon=${latlng.lng}#map=15/${latlng.lat}/${latlng.lng}`,
+          );
         },
       },
       '-',
@@ -340,21 +355,34 @@ export default class ViewColumn extends Vue {
     renderjson.set_replacer(renderjsonReplacer);
     renderjson.set_show_to_level('all');
 
-    (this.$refs.renderedJson as any).appendChild(renderjson(this.body, `response-${this.host}`));
+    (this.$refs.renderedJson as Element).appendChild(
+      renderjson(this.body, `response-${this.host}`),
+    );
     this.getMap().invalidateSize();
     this.centerFeatures(this.body.features);
-    // this.getMap().addHandler('contextmenu', {
-    //   contextmenu: true,
-    //   contextmenuWidth: 140,
-    //   contextmenuItems: [{
-    //     text: 'Show coordinates',
-    //     callback: (a: any) => console.log(a),
-    //   }, {
-    //     text: 'Center map here',
-    //     callback: (a: any) => console.log(a),
-    //   },
-    //   ],
-    // });
+    const stateChangingButton = L.easyButton({
+      states: [
+        {
+          stateName: 'taller-map',
+          icon: '<span>↕</span>',
+          title: 'toggle taller map',
+          onClick(btn, map) {
+            console.log('taller', faExpand);
+            map.getContainer().classList.toggle('tall');
+            if (map.getContainer().classList.contains('tall')) {
+              // eslint-disable-next-line no-param-reassign
+              map.getContainer().style.height = `${window.outerHeight * 0.40}px`;
+            } else {
+              // eslint-disable-next-line no-param-reassign
+              map.getContainer().style.height = '200px';
+            }
+            map.invalidateSize();
+          },
+        },
+      ],
+    });
+
+    stateChangingButton.addTo(this.getMap());
 
     this.addBoundingBoxes();
     this.addMarkers();
