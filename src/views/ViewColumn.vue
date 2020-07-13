@@ -193,17 +193,17 @@ function parseHTML(s: string) {
   return tmp.body.children[0];
 }
 
-function renderjsonReplacer(key: string, value: string) {
-  const makeLink = (url: string, customText?: string) => {
-    const a = parseHTML(`<a>"${customText || value}"</a>`);
-    (a as HTMLAnchorElement).href = url;
-    return a;
-  };
+function makeLink(url: string, value: string): HTMLAnchorElement {
+  const a = parseHTML(`<a>"${value}"</a>`) as HTMLAnchorElement;
+  a.href = url;
+  return a;
+}
 
+function maybeLinkifyGid(value: string, linkText?: string): Element | string {
   if (typeof value === 'string' && value.startsWith('whosonfirst:')) {
     const parts = value.split(':');
     const id = parts[parts.length - 1];
-    return makeLink(`https://spelunker.whosonfirst.org/id/${id}`);
+    return makeLink(`https://spelunker.whosonfirst.org/id/${id}`, linkText || value);
   }
   // "gid": "openaddresses:address:us/tn/statewide:db4775140901eba0",
   if (typeof value === 'string' && value.startsWith('openaddresses:')) {
@@ -227,21 +227,34 @@ function renderjsonReplacer(key: string, value: string) {
       return value;
     }
 
-    return makeLink(`https://www.openstreetmap.org/${gidParts[2]}`);
+    return makeLink(`https://www.openstreetmap.org/${gidParts[2]}`, value);
   }
 
   // "gid": "geonames:locality:4887398", --> https://www.geonames.org/4887398
   if (typeof value === 'string' && value.startsWith('geonames:')) {
     const parts = value.split(':');
     const geonameId = parts[parts.length - 1];
-    return makeLink(`https://www.geonames.org/${geonameId}`);
-  }
-
-  if (typeof value === 'string' && (value.startsWith('http:') || value.startsWith('http://'))) {
-    return makeLink(value);
+    return makeLink(`https://www.geonames.org/${geonameId}`, value);
   }
 
   return value;
+}
+
+function renderjsonReplacer(isDebug: boolean, key: string, value: string, containingObject: any) {
+  // linkify all urls
+  if (typeof value === 'string' && (value.startsWith('http:') || value.startsWith('http://'))) {
+    return makeLink(value, value);
+  }
+
+  if (key === 'id') {
+    // link id to /place
+    const placeLink = `${window.location.pathname}#/v1/place?ids=${encodeURIComponent(containingObject.gid)}&debug=${isDebug ? 1 : 0}`;
+    return makeLink(placeLink, value);
+  }
+
+  // if value is a gid (like contintent_gid or locality_gid), linkify it to source, otherwise
+  // leave it alone
+  return maybeLinkifyGid(value);
 }
 
 const markers = {
@@ -360,7 +373,7 @@ export default class ViewColumn extends Vue {
       this.tileUrl = `http:${this.tileUrl}`;
     }
 
-    renderjson.set_replacer(renderjsonReplacer);
+    renderjson.set_replacer(renderjsonReplacer.bind(null, this.body?.geocoding?.debug));
     renderjson.set_show_to_level('all');
 
     (this.$refs.renderedJson as Element).appendChild(

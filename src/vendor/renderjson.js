@@ -233,7 +233,7 @@ function _renderjsonhelper(json, indent, dont_indent, show_level, options, path)
         os,
         themetext(null, indent + "  ", "key", '"' + k + '"', "object syntax", ": "),
         _renderjson(
-          options.replacer.call(json, k, json[k]),
+          options.replacer.call(json, k, json[k], json),
           indent + "  ",
           true,
           show_level - 1,
