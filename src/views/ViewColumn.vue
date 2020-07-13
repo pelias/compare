@@ -63,7 +63,6 @@
   z-index: -1;
   opacity: 0.001;
 }
-
 </style>
 
 <template>
@@ -116,13 +115,7 @@
       z-index: 100;
     "
     >
-      <l-map
-        style="height:200px;"
-        :center="center"
-        :zoom="13"
-        ref="mymap"
-        :options="mapOptions"
-      >
+      <l-map style="height:200px;" :center="center" :zoom="13" ref="mymap" :options="mapOptions">
         <l-tile-layer :url="tileUrl" :attribution="attribution" />
       </l-map>
     </div>
@@ -173,6 +166,8 @@ import 'leaflet-contextmenu/dist/leaflet.contextmenu.css';
 import 'leaflet-easybutton/src/easy-button';
 import 'leaflet-easybutton/src/easy-button.css';
 
+import { PeliasResponse } from '../pelias-types';
+
 import ResultsSummary from './ResultsSummary.vue';
 
 const icons = [
@@ -187,10 +182,10 @@ const icons = [
 ];
 icons.forEach((i) => library.add(i));
 
-function parseHTML(s: string) {
+function parseHTML(s: string): HTMLElement {
   const tmp = document.implementation.createHTMLDocument();
   tmp.body.innerHTML = s;
-  return tmp.body.children[0];
+  return tmp.body.children[0] as HTMLElement;
 }
 
 function makeLink(url: string, value: string): HTMLAnchorElement {
@@ -248,7 +243,9 @@ function renderjsonReplacer(isDebug: boolean, key: string, value: string, contai
 
   if (key === 'id') {
     // link id to /place
-    const placeLink = `${window.location.pathname}#/v1/place?ids=${encodeURIComponent(containingObject.gid)}&debug=${isDebug ? 1 : 0}`;
+    const placeLink = `${window.location.pathname}#/v1/place?ids=${encodeURIComponent(
+      containingObject.gid,
+    )}&debug=${isDebug ? 1 : 0}`;
     return makeLink(placeLink, value);
   }
 
@@ -292,7 +289,7 @@ const markers = {
   components: { FontAwesomeIcon, ResultsSummary },
 })
 export default class ViewColumn extends Vue {
-  @Prop() private body!: any;
+  @Prop() private body!: PeliasResponse;
 
   @Prop() private url!: string;
 
@@ -373,14 +370,15 @@ export default class ViewColumn extends Vue {
       this.tileUrl = `http:${this.tileUrl}`;
     }
 
-    renderjson.set_replacer(renderjsonReplacer.bind(null, this.body?.geocoding?.debug));
+    const isDebug = Boolean(this.body?.geocoding?.debug);
+    renderjson.set_replacer(renderjsonReplacer.bind(null, isDebug));
     renderjson.set_show_to_level('all');
 
     (this.$refs.renderedJson as Element).appendChild(
       renderjson(this.body, `response-${this.host}`),
     );
     this.getMap().invalidateSize();
-    this.centerFeatures(this.body.features);
+    this.centerFeatures(this.body);
     const stateChangingButton = L.easyButton({
       states: [
         {
@@ -391,7 +389,7 @@ export default class ViewColumn extends Vue {
             map.getContainer().classList.toggle('tall');
             if (map.getContainer().classList.contains('tall')) {
               // eslint-disable-next-line no-param-reassign
-              map.getContainer().style.height = `${window.outerHeight * 0.40}px`;
+              map.getContainer().style.height = `${window.outerHeight * 0.4}px`;
             } else {
               // eslint-disable-next-line no-param-reassign
               map.getContainer().style.height = '200px';
@@ -408,11 +406,11 @@ export default class ViewColumn extends Vue {
     this.addMarkers();
   }
 
-  addMarkers() {
+  addMarkers(this: ViewColumn) {
     const geojson = this.body;
 
     // all custom icon logic
-    const pointToLayer = function style(f: GeoJSON.Feature, latlon: L.LatLng) {
+    const pointToLayer = (f: GeoJSON.Feature, latlon: L.LatLng) => {
       let i = markers.default;
 
       // custom icon created from geojson properties
@@ -449,19 +447,36 @@ export default class ViewColumn extends Vue {
         }
       }
 
-      return L.marker(latlon, {
-        title: `${f.properties?.gid} - ${f.properties?.label}`,
-        icon: i,
-      }).bindPopup(
-        `<p>
+      const popupHtml = parseHTML(`<p>
           <strong style="font-size:14px">
+            Result #${f.properties?.index}
+            <br/>
             ${f.properties?.label}
           </strong>
           <br />
           ${f.properties?.gid}
-        </p>`,
+          <br />
+          <a class="scrollToFeature">Scroll to feature</a>
+        </p>`);
+      (popupHtml.querySelector('.scrollToFeature')! as HTMLAnchorElement).addEventListener(
+        'click',
+        () => {
+          this.featureClicked({ feature: f, index: f.properties?.index, zoomTo: false });
+        },
       );
+
+      return L.marker(latlon, {
+        title: `${f.properties?.gid} - ${f.properties?.label}`,
+        icon: i,
+      }).bindPopup(popupHtml);
     };
+
+    geojson.features.forEach((feature: GeoJSON.Feature, index: number) => {
+      if (feature.properties) {
+        // eslint-disable-next-line no-param-reassign
+        feature.properties.index = index;
+      }
+    });
 
     const style = (f: any) => f.properties;
     L.geoJSON(geojson, {
@@ -503,7 +518,7 @@ export default class ViewColumn extends Vue {
     };
 
     const bboxLayer = new L.GeoJSON();
-    (this.body.features || []).forEach((feat: { bbox: number[] }) => {
+    (this.body.features || []).forEach((feat) => {
       if (feat?.bbox) {
         const bounds = [
           [feat.bbox[1], feat.bbox[0]],
@@ -540,17 +555,27 @@ export default class ViewColumn extends Vue {
     }
   }
 
-  featureClicked({ feature, index }: { feature: GeoJSON.Feature; index: number }) {
+  featureClicked({
+    feature,
+    index,
+    zoomTo,
+  }: {
+    feature: GeoJSON.Feature;
+    index: number;
+    zoomTo: boolean;
+  }) {
     const geojson = L.geoJSON(feature);
     const bounds = geojson.getBounds();
 
-    if (feature.geometry.type === 'Point') {
-      this.getMap().setView(
-        bounds.getCenter(),
-        this.getZoomLevelForLayer(feature.properties?.layer || ''),
-      );
-    } else {
-      this.getMap().fitBounds(bounds);
+    if (zoomTo) {
+      if (feature.geometry.type === 'Point') {
+        this.getMap().setView(
+          bounds.getCenter(),
+          this.getZoomLevelForLayer(feature.properties?.layer || ''),
+        );
+      } else {
+        this.getMap().fitBounds(bounds);
+      }
     }
 
     const previouslyHighlightedElemented = document.getElementsByClassName('highlightedFeature');
@@ -570,10 +595,10 @@ export default class ViewColumn extends Vue {
     return ((this.$refs.mymap as unknown) as { mapObject: L.Map }).mapObject;
   }
 
-  copyHelper(stringToCopy: string, copyName: string) {
+  copyHelper(jsonToCopy: any, copyName: string) {
     /* Get the text field */
     const copyText = this.$refs.hiddenCopyInput as HTMLInputElement;
-    copyText.value = JSON.stringify(stringToCopy, null, 4);
+    copyText.value = JSON.stringify(jsonToCopy, null, 4);
 
     /* Select the text field */
     copyText.select();
@@ -602,9 +627,7 @@ export default class ViewColumn extends Vue {
 
   get esQuery() {
     const esReqEntries = this.body?.geocoding?.debug
-      ?.map(
-        (debugEntry: Record<string, any>) => (debugEntry['controller:search'] || {}).ES_req?.body
-      )
+      ?.map((debugEntry) => (debugEntry['controller:search'] || {}).ES_req?.body)
       .filter((e: any) => Boolean(e));
     if (esReqEntries) {
       return esReqEntries[0];
