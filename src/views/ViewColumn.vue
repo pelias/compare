@@ -63,6 +63,12 @@
   z-index: -1;
   opacity: 0.001;
 }
+
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+  color: lightgray !important;
+  opacity: 0.5; /* Firefox */
+  font-style: italic;
+}
 </style>
 
 <template>
@@ -130,6 +136,9 @@
       <div class="copyButtons">
         <b-button class="copyJson" @click="copyJson">Copy JSON</b-button>
         <b-button class="copyEsQuery" v-if="esQuery" @click="copyEsQuery">Copy ES Query</b-button>
+        <b-button class="runAsStructuredQuery" @click="runAsStructuredQuery"
+          >Run as structured</b-button
+        >
       </div>
       <div class="renderedJson" ref="renderedJson"></div>
     </div>
@@ -297,6 +306,8 @@ export default class ViewColumn extends Vue {
 
   @Prop() private host!: string;
 
+  @Prop() private isBuiltForSpa!: boolean;
+
   private renderedJson: any = null;
 
   private summary = '';
@@ -361,6 +372,16 @@ export default class ViewColumn extends Vue {
       // eslint-disable-next-line no-console
       console.error(e);
     }
+  }
+
+  updateHash(path: string) {
+    if (this.isBuiltForSpa) {
+      window.history.pushState({}, '', path);
+    } else {
+      window.history.pushState({}, '', `#${path}`);
+    }
+
+    this.$forceUpdate();
   }
 
   mounted() {
@@ -623,6 +644,30 @@ export default class ViewColumn extends Vue {
 
   copyEsQuery() {
     this.copyHelper(this.esQuery, 'ES Query');
+  }
+
+  runAsStructuredQuery() {
+    if (!this.body.geocoding.query.parsed_text) {
+      return;
+    }
+    const parsedParams: Record<string, string> = {
+      ...this.body.geocoding.query.parsed_text,
+    } as unknown as Record<string, string>;
+    if (parsedParams.street || parsedParams.housenumber) {
+      parsedParams.address = [parsedParams.housenumber, parsedParams.street, parsedParams.unit].join(' ');
+      delete parsedParams.street;
+      delete parsedParams.housenumber;
+      delete parsedParams.unit;
+    }
+
+    if (parsedParams.state) {
+      parsedParams.region = parsedParams.state;
+      delete parsedParams.state;
+    }
+
+    const urlSearchParams = new URLSearchParams(parsedParams);
+    window.location.hash = `/v1/search/structured?${urlSearchParams.toString()}`;
+    window.location.search = '';
   }
 
   get esQuery() {

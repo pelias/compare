@@ -7,6 +7,7 @@ Among other things,
   rather than using the icons ⊕ and ⊖
 - it adds the ability to have a replacer function that can change how strings
   are rendered, this is used to linkify GIDs in ViewColumn.vue
+- it adds the ability to linkify keys
 */
 
 /* eslint-disable */
@@ -231,7 +232,7 @@ function _renderjsonhelper(json, indent, dont_indent, show_level, options, path)
       if (!(k in json)) continue;
       append(
         os,
-        themetext(null, indent + "  ", "key", '"' + k + '"', "object syntax", ": "),
+        themetext(null, indent + "  ", "key", '"' + options.key_formatter.call(json, k) + '"', "object syntax", ": "),
         _renderjson(
           options.replacer.call(json, k, json[k], json),
           indent + "  ",
@@ -257,6 +258,12 @@ export default function renderjson(json, idPrefix) {
       : function(k, v) {
           return v;
         };
+  options.key_formatter =
+      typeof options.key_formatter == "function"
+        ? options.key_formatter
+        : function(v) {
+            return v;
+          };
   var pre = append(
     document.createElement("pre"),
     _renderjson(json, "", false, options.show_to_level, options, idPrefix || 'renderjson')
@@ -287,6 +294,10 @@ renderjson.set_replacer = function(replacer) {
   renderjson.options.replacer = replacer;
   return renderjson;
 };
+renderjson.set_key_formatter = function(key_formatter) {
+  renderjson.options.key_formatter = key_formatter;
+  return renderjson;
+};
 renderjson.set_collapse_msg = function(collapse_msg) {
   renderjson.options.collapse_msg = collapse_msg;
   return renderjson;
@@ -306,6 +317,7 @@ renderjson.set_show_by_default(false);
 renderjson.set_sort_objects(false);
 renderjson.set_max_string_length("none");
 renderjson.set_replacer(void 0);
+renderjson.set_key_formatter(void 0);
 renderjson.set_property_list(void 0);
 renderjson.set_collapse_msg(function(len) {
   return len + " item" + (len == 1 ? "" : "s");

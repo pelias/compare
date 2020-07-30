@@ -181,6 +181,7 @@ label {
         :body="response.body"
         :host="response.host"
         :numHosts="hosts.length"
+        :isBuiltForSpa="isBuiltForSpa"
       />
     </b-row>
 
