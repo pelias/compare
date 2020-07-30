@@ -136,7 +136,7 @@
       <div class="copyButtons">
         <b-button class="copyJson" @click="copyJson">Copy JSON</b-button>
         <b-button class="copyEsQuery" v-if="esQuery" @click="copyEsQuery">Copy ES Query</b-button>
-        <b-button class="runAsStructuredQuery" @click="runAsStructuredQuery"
+        <b-button class="runAsStructuredQuery" v-if="hasParsedQuery" @click="runAsStructuredQuery"
           >Run as structured</b-button
         >
       </div>
@@ -306,7 +306,7 @@ export default class ViewColumn extends Vue {
 
   @Prop() private host!: string;
 
-  @Prop() private isBuiltForSpa!: boolean;
+  @Prop() private updateHash!: (s: string) => void;
 
   private renderedJson: any = null;
 
@@ -337,13 +337,13 @@ export default class ViewColumn extends Vue {
       {
         text: 'Reverse Geocode (coarse)',
         callback: ({ latlng }: { latlng: L.LatLng }) => {
-          window.location.hash = `#/v1/reverse?point.lat=${latlng.lat}&point.lon=${latlng.lng}&layers=coarse`;
+          this.updateHash(`#/v1/reverse?point.lat=${latlng.lat}&point.lon=${latlng.lng}&layers=coarse`);
         },
       },
       {
         text: 'Reverse Geocode (fine)',
         callback: ({ latlng }: { latlng: L.LatLng }) => {
-          window.location.hash = `#/v1/reverse?point.lat=${latlng.lat}&point.lon=${latlng.lng}`;
+          this.updateHash(`#/v1/reverse?point.lat=${latlng.lat}&point.lon=${latlng.lng}`);
         },
       },
     ],
@@ -372,16 +372,6 @@ export default class ViewColumn extends Vue {
       // eslint-disable-next-line no-console
       console.error(e);
     }
-  }
-
-  updateHash(path: string) {
-    if (this.isBuiltForSpa) {
-      window.history.pushState({}, '', path);
-    } else {
-      window.history.pushState({}, '', `#${path}`);
-    }
-
-    this.$forceUpdate();
   }
 
   mounted() {
@@ -646,8 +636,13 @@ export default class ViewColumn extends Vue {
     this.copyHelper(this.esQuery, 'ES Query');
   }
 
+  get hasParsedQuery() {
+    console.log('has?', this.body?.geocoding?.query?.parsed_text);
+    return this.body?.geocoding?.query?.parsed_text;
+  }
+
   runAsStructuredQuery() {
-    if (!this.body.geocoding.query.parsed_text) {
+    if (!this.hasParsedQuery) {
       return;
     }
     const parsedParams: Record<string, string> = {
@@ -665,9 +660,13 @@ export default class ViewColumn extends Vue {
       delete parsedParams.state;
     }
 
+    if (parsedParams.city) {
+      parsedParams.locality = parsedParams.city;
+      delete parsedParams.city;
+    }
+
     const urlSearchParams = new URLSearchParams(parsedParams);
-    window.location.hash = `/v1/search/structured?${urlSearchParams.toString()}`;
-    window.location.search = '';
+    this.updateHash(`/v1/search/structured?${urlSearchParams.toString()}`);
   }
 
   get esQuery() {

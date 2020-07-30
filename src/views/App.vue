@@ -23,14 +23,12 @@ label {
         <div v-if="isStructured">
           <b-form-group
             :label="name"
-            label-for="input-text"
             label-cols-sm="2"
             v-for="(value, name) in structured"
             :key="name"
           >
             <b-form-input
               class="w-100"
-              id="input-text"
               :placeholder="name"
               v-model="structured[name]"
               @change="onChange"
@@ -181,7 +179,7 @@ label {
         :body="response.body"
         :host="response.host"
         :numHosts="hosts.length"
-        :isBuiltForSpa="isBuiltForSpa"
+        :updateHash="updateHashFromChild"
       />
     </b-row>
 
@@ -476,8 +474,8 @@ export default class CompareView extends Vue {
       params.set('ids', this.ids);
     }
 
-    if (this.debug !== undefined) {
-      params.set('debug', this.debug ? '1' : '0');
+    if (this.debug !== undefined && this.debug) {
+      params.set('debug', '1');
     }
     return params;
   }
@@ -544,19 +542,33 @@ export default class CompareView extends Vue {
     this.onChange();
   }
 
-  onChange() {
-    const params = this.getParams();
+  updateHashFromChild(queryPath: string) {
+    // updqate the hash, parse it out, let that add the parsed hash to the history
+    window.location.hash = queryPath;
 
-    this.queryPath = `${this.endpoint}?${params.toString()}`;
+    this.parseHash();
+
+    this.onSubmit();
+  }
+
+  updateHash(queryPath: string) {
     if (this.isBuiltForSpa) {
-      window.history.pushState({}, '', this.queryPath);
+      window.history.pushState({}, '', queryPath);
     } else {
-      window.history.pushState({}, '', `#${this.queryPath}`);
+      window.history.pushState({}, '', `#${queryPath}`);
     }
 
     document.title = `Pelias Compare Tool: ${this.text || this.ids || this.point}`;
 
     this.$forceUpdate();
+  }
+
+  onChange() {
+    const params = this.getParams();
+
+    this.queryPath = `${this.endpoint}?${params.toString()}`;
+
+    this.updateHash(this.queryPath);
   }
 
   get prettyExtraParams() {
@@ -601,6 +613,7 @@ export default class CompareView extends Vue {
   };
 
   onSubmit() {
+    console.log('calling submit');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const responsePromises: Promise<any>[] = this.hosts.map(async (_host: Tag) => {
       let host = _host.text;
