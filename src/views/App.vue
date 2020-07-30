@@ -386,16 +386,19 @@ export default class CompareView extends Vue {
     this.extraParams = params.toString();
   }
 
-  parseHash() {
-    // If we're running in non-SPA mode with routing like
-    // http://blackmad.github.io/pelias-compare/index.html#/v1/search?text=....
-    let hash = window.location.hash.substr(1);
+  getPathFromUrl(): string {
     // If we're running in SPA mode with routing like
     // http://localhost:8080/v1/search?text=San+Nicolas%2C+Peru&debug=0
     if (this.isBuiltForSpa && window.location.pathname.length > 1) {
-      hash = `/v1/${window.location.href.split('/v1/')[1]}`;
+      return `/v1/${window.location.href.split('/v1/')[1]}`;
     }
+    // If we're running in non-SPA mode with routing like
+    // http://blackmad.github.io/pelias-compare/index.html#/v1/search?text=....
+    return window.location.hash.substr(1);
+  }
 
+  parseHash(_hash: string) {
+    let hash = _hash;
     // As a hueristic, only decode as uri component if there's a uri
     // escaped question mark in there. Copy and pasting a path onto the
     // url hash string won't automatically do this
@@ -434,12 +437,12 @@ export default class CompareView extends Vue {
       }
     }
 
-    this.parseHash();
+    this.parseHash(this.getPathFromUrl());
 
     window.addEventListener(
       'hashchange',
       () => {
-        this.parseHash();
+        this.parseHash(this.getPathFromUrl());
       },
       false,
     );
@@ -543,10 +546,7 @@ export default class CompareView extends Vue {
   }
 
   updateHashFromChild(queryPath: string) {
-    // updqate the hash, parse it out, let that add the parsed hash to the history
-    window.location.hash = queryPath;
-
-    this.parseHash();
+    this.parseHash(queryPath);
 
     this.onSubmit();
   }
@@ -558,7 +558,8 @@ export default class CompareView extends Vue {
       window.history.pushState({}, '', `#${queryPath}`);
     }
 
-    document.title = `Pelias Compare Tool: ${this.text || this.ids || this.point}`;
+
+    document.title = `Pelias Compare Tool: ${this.text || this.ids || this.point || this.endpoint}`;
 
     this.$forceUpdate();
   }
@@ -613,7 +614,6 @@ export default class CompareView extends Vue {
   };
 
   onSubmit() {
-    console.log('calling submit');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const responsePromises: Promise<any>[] = this.hosts.map(async (_host: Tag) => {
       let host = _host.text;

@@ -665,6 +665,11 @@ export default class ViewColumn extends Vue {
       delete parsedParams.city;
     }
 
+    if (parsedParams.subject) {
+      parsedParams.venue = parsedParams.subject;
+      delete parsedParams.subject;
+    }
+
     const urlSearchParams = new URLSearchParams(parsedParams);
     this.updateHash(`/v1/search/structured?${urlSearchParams.toString()}`);
   }
