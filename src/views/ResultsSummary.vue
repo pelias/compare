@@ -32,6 +32,7 @@ import {
   faCrosshairs,
   faRoad,
   faQuestion,
+  faMailBulk,
 } from '@fortawesome/free-solid-svg-icons';
 import { faCuttlefish } from '@fortawesome/free-brands-svg-icons';
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -95,6 +96,8 @@ export default class ResultsSummary extends Vue {
         return faCrosshairs;
       case 'street':
         return faRoad;
+      case 'postalcode':
+        return faMailBulk;
       default:
         return faQuestion;
     }
