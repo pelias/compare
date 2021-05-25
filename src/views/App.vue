@@ -645,7 +645,6 @@ export default class CompareView extends Vue {
       // eslint-disable-next-line prefer-const
       let { status, data } = await fetch(urlWithParams, {
         method: 'GET',
-        headers: { Accept: 'application/json', 'X-Requested-With': '' },
       })
         .then(async (response) => ({ data: await response.json(), status: response.status }))
         .catch((err) => {
