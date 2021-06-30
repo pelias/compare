@@ -186,6 +186,8 @@ label {
         :key="response.url"
         :url="response.url"
         :body="response.body"
+        :errors="response.errors"
+        :warnings="response.warnings"
         :host="response.host"
         :numHosts="hosts.length"
         :updateHash="updateHashFromChild"
@@ -657,19 +659,16 @@ export default class CompareView extends Vue {
           };
         });
 
-      if (!data || !data.geocoding) {
-        // mock response to reuse the UI logic
+      const errors = data?.geocoding?.errors || [];
+      const warnings = data?.geocoding?.warnings || [];
 
-        let message = 'failed to load json';
+      if (!data?.geocoding) {
+        let message = `HTTP ${status} status from ${host}`;
         if (data && data.error) {
           message = data.error;
         }
 
-        data = {
-          geocoding: {
-            errors: [`${status} ${message}`],
-          },
-        };
+        errors.push(message);
       }
 
       return {
@@ -677,6 +676,8 @@ export default class CompareView extends Vue {
         status,
         host,
         body: data,
+        errors,
+        warnings,
         bodyString: `${JSON.stringify(data, null, 2)}\n\n`,
       };
     });

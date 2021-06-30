@@ -76,14 +76,14 @@
     <div class="messages">
       <div
         class="alert alert-danger"
-        v-for="(message, index) in body.geocoding.errors"
+        v-for="(message, index) in errors"
         :key="index"
       >
         {{ message }}
       </div>
       <div
         class="alert alert-warning"
-        v-for="(message, index) in body.geocoding.warnings"
+        v-for="(message, index) in warnings"
         :key="index"
       >
         {{ message }}
@@ -305,6 +305,10 @@ export default class ViewColumn extends Vue {
   @Prop() private numHosts!: number;
 
   @Prop() private host!: string;
+
+  @Prop() private errors!: Array<string>;
+
+  @Prop() private warnings!: Array<string>;
 
   @Prop() private updateHash!: (s: string) => void;
 
