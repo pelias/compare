@@ -200,14 +200,20 @@ function parseHTML(s: string): HTMLElement {
 function makeLink(url: string, value: string): HTMLAnchorElement {
   const a = parseHTML(`<a>"${value}"</a>`) as HTMLAnchorElement;
   a.href = url;
+  a.target = '_blank';
   return a;
 }
 
-function maybeLinkifyGid(value: string, linkText?: string): Element | string {
-  if (typeof value === 'string' && value.startsWith('whosonfirst:')) {
+function maybeLinkifyGid(value: string, containingObject?: any): Element | string {
+  if (typeof value === 'string' && value.startsWith('whosonfirst:') && containingObject.country_code) {
     const parts = value.split(':');
     const id = parts[parts.length - 1];
-    return makeLink(`https://spelunker.whosonfirst.org/id/${id}`, linkText || value);
+    const type = parts[1] === 'postalcode' ? 'postalcode' : 'admin';
+    let url = `https://github.com/whosonfirst-data/whosonfirst-data-${type}-${containingObject.country_code.toLowerCase()}/tree/master/data`;
+    for (let idx = 0; idx < id.length; idx += 3) {
+      url += `/${(id.substring(idx, idx + 3))}`;
+    }
+    return makeLink(`${url}/${id}.geojson`, value);
   }
   // "gid": "openaddresses:address:us/tn/statewide:db4775140901eba0",
   if (typeof value === 'string' && value.startsWith('openaddresses:')) {
@@ -217,7 +223,7 @@ function maybeLinkifyGid(value: string, linkText?: string): Element | string {
       return parseHTML(
         `<span>"${parts[0]}:${
           parts[1]
-        }:<a href="https://github.com/openaddresses/openaddresses/blob/master/sources/${filepath}.json">${
+        }:<a href="https://github.com/openaddresses/openaddresses/blob/master/sources/${filepath}.json" about="_blank">${
           parts[2]
         }</a>:${parts.slice(3).join(':')}"</span>`,
       );
@@ -260,7 +266,7 @@ function renderjsonReplacer(isDebug: boolean, key: string, value: string, contai
 
   // if value is a gid (like contintent_gid or locality_gid), linkify it to source, otherwise
   // leave it alone
-  return maybeLinkifyGid(value);
+  return maybeLinkifyGid(value, containingObject);
 }
 
 const markers = {
