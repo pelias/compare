@@ -179,6 +179,8 @@ import { PeliasResponse } from '../pelias-types';
 
 import ResultsSummary from './ResultsSummary.vue';
 
+import getWOFRepository from '../wof';
+
 const icons = [
   faWeebly,
   faDotCircle,
@@ -205,15 +207,11 @@ function makeLink(url: string, value: string): HTMLAnchorElement {
 }
 
 function maybeLinkifyGid(value: string, containingObject?: any): Element | string {
-  if (typeof value === 'string' && value.startsWith('whosonfirst:') && containingObject.country_code) {
-    const parts = value.split(':');
-    const id = parts[parts.length - 1];
-    const type = parts[1] === 'postalcode' ? 'postalcode' : 'admin';
-    let url = `https://github.com/whosonfirst-data/whosonfirst-data-${type}-${containingObject.country_code.toLowerCase()}/tree/master/data`;
-    for (let idx = 0; idx < id.length; idx += 3) {
-      url += `/${(id.substring(idx, idx + 3))}`;
+  if (typeof value === 'string' && value.startsWith('whosonfirst:')) {
+    const url = getWOFRepository(value, containingObject.country_code);
+    if (url) {
+      return makeLink(url, value);
     }
-    return makeLink(`${url}/${id}.geojson`, value);
   }
   // "gid": "openaddresses:address:us/tn/statewide:db4775140901eba0",
   if (typeof value === 'string' && value.startsWith('openaddresses:')) {
