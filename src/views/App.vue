@@ -352,11 +352,32 @@ export default class CompareView extends Vue {
     }
   }
 
+  // api_key is never carried through from a pasted query: each host gets the
+  // key chosen by getKey() at submit time instead
+  // eslint-disable-next-line class-methods-use-this
+  stripApiKey(queryPath: string): string {
+    const [path, ...rest] = queryPath.split('?');
+    if (rest.length === 0) {
+      return queryPath;
+    }
+    const query = rest
+      .join('?')
+      .split('&')
+      .filter((param) => param.split('=')[0].trim().toLowerCase() !== 'api_key')
+      .join('&');
+
+    return query.length > 0 ? `${path}?${query}` : path;
+  }
+
   parseQuery(query: string) {
     const parts = query.split('?');
     // eslint-disable-next-line prefer-destructuring
     this.endpoint = parts[0];
     const params = new URLSearchParams(parts[1]);
+
+    [...params.keys()]
+      .filter((key) => key.trim().toLowerCase() === 'api_key')
+      .forEach((key) => params.delete(key));
 
     this.debug = params.get('debug') || '0';
     params.delete('debug');
@@ -599,9 +620,10 @@ export default class CompareView extends Vue {
   }
 
   set prettyQueryPath(humanReadablePath: string) {
-    this.parseQuery(humanReadablePath);
+    const path = this.stripApiKey(humanReadablePath);
+    this.parseQuery(path);
     this.onChange();
-    this.queryPath = humanReadablePath;
+    this.queryPath = path;
   }
 
   // get your own api key for free at https://geocode.earth/
