@@ -408,7 +408,8 @@ export default class CompareView extends Vue {
     return window.location.hash.substr(1);
   }
 
-  parseHash(_hash: string) {
+  // returns true if the parsed query was complete enough to be submitted
+  parseHash(_hash: string): boolean {
     let hash = _hash;
     // As a hueristic, only decode as uri component if there's a uri
     // escaped question mark in there. Copy and pasting a path onto the
@@ -425,8 +426,10 @@ export default class CompareView extends Vue {
         || (this.ids && this.endpointUsesIds)
       ) {
         this.onSubmit();
+        return true;
       }
     }
+    return false;
   }
 
   created() {
@@ -557,9 +560,10 @@ export default class CompareView extends Vue {
   }
 
   updateHashFromChild(queryPath: string) {
-    this.parseHash(queryPath);
-
-    this.onSubmit();
+    // parseHash submits on its own if the query has everything it needs
+    if (!this.parseHash(queryPath)) {
+      this.onSubmit();
+    }
   }
 
   updateHash(queryPath: string) {

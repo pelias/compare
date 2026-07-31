@@ -347,13 +347,13 @@ export default class ViewColumn extends Vue {
       {
         text: 'Reverse Geocode (coarse)',
         callback: ({ latlng }: { latlng: L.LatLng }) => {
-          this.updateHash(`#/v1/reverse?point.lat=${latlng.lat}&point.lon=${latlng.lng}&layers=coarse`);
+          this.updateHash(`/v1/reverse?point.lat=${latlng.lat}&point.lon=${latlng.lng}&layers=coarse`);
         },
       },
       {
         text: 'Reverse Geocode (fine)',
         callback: ({ latlng }: { latlng: L.LatLng }) => {
-          this.updateHash(`#/v1/reverse?point.lat=${latlng.lat}&point.lon=${latlng.lng}`);
+          this.updateHash(`/v1/reverse?point.lat=${latlng.lat}&point.lon=${latlng.lng}`);
         },
       },
     ],
